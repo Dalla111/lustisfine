@@ -1,0 +1,871 @@
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15,10,20,0.6);
+      z-index: -1;
+    }
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kompa — Velvet Luxury Clone of Tiava</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --velvet-red:  #ff2a6d;
+      --lust-red:    #ff1493;
+      --glass-bg:    rgba(255,255,255,0.08);
+      --dark-bg:     #0f0a14;
+      --light-text:  #f2f2f2;
+      --gap:         16px;
+      --radius:      12px;
+      --per-page:    30;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body {
+      background: linear-gradient(135deg, #1a0a1f 0%, #2d0a35 100%);
+      color: var(--light-text);
+      font-family: 'Segoe UI',sans-serif;
+      position: relative;
+      min-height: 100vh;
+      overflow-y: scroll;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+    }
+    body::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
+    }
+
+    .heart {
+      position: fixed;
+      background: var(--lust-red);
+      transform: rotate(45deg);
+      filter: drop-shadow(0 0 10px var(--lust-red));
+      pointer-events: none;
+      z-index: -1;
+      transition: transform 0.3s ease;
+    }
+    .heart:before, .heart:after {
+      content: '';
+      position: absolute;
+      background: inherit;
+      border-radius: 50%;
+    }
+    .heart:before {
+      top: -50%;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .heart:after {
+      top: 0;
+      left: -50%;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Folder-style sidebar */
+    .sidebar {
+      position: fixed;
+      right: -300px;
+      top: 60px; /* Below header */
+      height: calc(100vh - 60px);
+      width: 280px;
+      background: rgba(15,10,20,0.97);
+      backdrop-filter: blur(15px);
+      z-index: 999;
+      transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      padding: 1rem;
+      box-shadow: -5px 0 30px rgba(0,0,0,0.5);
+      border-left: 1px solid rgba(255,42,109,0.3);
+      display: flex;
+      flex-direction: column;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    
+    .sidebar:hover {
+      right: 0 !important;
+    }
+    
+    .sidebar-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    
+    .sidebar-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .sidebar-content::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+    }
+    
+    .sidebar-content::-webkit-scrollbar-thumb {
+      background: var(--lust-red);
+      border-radius: 3px;
+    }
+    
+    .sidebar-category {
+      padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+      position: relative;
+      margin-bottom: 4px;
+      border-left: 3px solid transparent;
+    }
+    
+    .sidebar-category:hover {
+      background: rgba(255,255,255,0.1);
+      border-left-color: var(--lust-red);
+    }
+    
+    .sidebar-category::before {
+      content: '📁';
+      position: absolute;
+      left: 0.75rem;
+      top: 0.75rem;
+      font-size: 1.1rem;
+    }
+    
+    .sidebar-category:hover::before {
+      content: '📂';
+    }
+    
+    header {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      padding: var(--gap);
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255,20,147,0.2);
+      text-shadow: 0 2px 8px rgba(255,42,109,0.5);
+      position: fixed;
+      top: 0;
+      width: 100%;
+      transition: transform 0.3s ease-in-out;
+      z-index: 1000;
+    }
+    .header-hidden {
+      transform: translateY(-100%);
+    }
+    main { 
+      padding: var(--gap);
+      padding-top: 5rem; /* Account for fixed header */
+    }
+    .grid {
+      display: grid;
+      gap: var(--gap);
+      grid-template-columns: repeat(auto-fill, minmax(240px,1fr));
+      padding-bottom: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+      #catgrid > div {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      flex-direction: column;
+      transform-style: preserve-3d;
+      perspective: 1000px;
+      position: relative;
+    }
+    .card:hover {
+      transform: translateY(-10px) scale(1.03) rotateX(5deg);
+      box-shadow: 0 24px 48px rgba(255,20,147,0.4);
+      border-color: rgba(255,42,109,0.5);
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      background: linear-gradient(to bottom, 
+        rgba(255,42,109,0) 0%,
+        rgba(255,42,109,0.1) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .card:hover::before {
+      opacity: 1;
+    }
+    .thumb {
+      width:100%;
+      aspect-ratio:16/9;
+      object-fit:cover;
+      transition: transform 0.5s ease, filter 0.3s ease;
+      transform-origin: center center;
+    }
+    .card:hover .thumb {
+      transform: scale(1.05);
+      filter: brightness(1.1) saturate(1.2);
+    }
+
+    /* Updated video-title CSS as directed */
+    .video-title {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      color: var(--light-text);
+      font-weight: 500;
+      position: relative;
+      cursor: pointer;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+      min-height: 3.5em;
+      transition: color 0.3s ease;
+    }
+    .card:hover .video-title {
+      color: #fff;
+      text-shadow: 0 0 8px rgba(255,42,109,0.5);
+    }
+    .video-title[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      top: 100%; left: 0;
+      background: var(--dark-bg);
+      color: #fff;
+      padding: 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      transform: translateY(6px);
+      z-index: 10;}
+
+.video-title[title]:hover::after {
+  content: attr(title);             /* tooltip with full title */
+  position: absolute;
+  top: 100%; left: 0;
+  background: var(--dark-bg);
+  color: #fff;
+  padding: 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  transform: translateY(6px);
+  z-index: 10;
+}
+
+
+    .badge {
+      position: absolute; bottom:8px; right:8px;
+      background: rgba(0,0,0,0.7); color:#fff;
+      padding:2px 6px; font-size:.75rem; border-radius:4px;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: .5rem;
+      margin: 2rem 0;
+      flex-wrap: wrap;
+    }
+    .pagination button, .pagination .page-btn {
+      border: none;
+      padding: .5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: transform .2s, background .3s;
+    }
+    .pagination button {
+      background: var(--lust-red);
+      color: #fff;
+    }
+    .pagination button:disabled {
+      opacity: .5; cursor: default;
+    }
+    .pagination .page-btn {
+      background: var(--glass-bg);
+      color: var(--light-text);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .pagination .page-btn.active,
+    .pagination .page-btn:hover {
+      background: var(--velvet-red);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+    .ellipsis {
+      padding: .5rem;
+      color: var(--light-text);
+    }
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: var(--lust-red);
+      border: 1px solid var(--lust-red);
+      padding: .5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .back-btn:hover {
+      background: var(--lust-red);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header style="cursor:pointer;font-family:'Great Vibes', 'Brush Script MT', cursive;font-weight:bold;font-size:3rem;text-align:left;padding-left:2rem;position:fixed;top:0;left:0;width:100%;z-index:1000;color:var(--lust-red);text-shadow:0 2px 10px rgba(255,20,147,0.7);height:60px;display:flex;align-items:center;background:rgba(15,10,20,0.8);border-bottom:1px solid rgba(255,42,109,0.3);">
+    <span onclick="showCategories()" style="flex:1">cumguys</span>
+    <input id="searchInput" type="text" placeholder="Search videos..." style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,42,109,0.3);border-radius:20px;padding:5px 15px;color:white;width:200px;margin-right:20px;outline:none;font-family:sans-serif;font-size:0.8rem;" oninput="searchVideos()">
+  </header>
+  <main id="main"></main>
+  <div id="scroll-progress" style="position:fixed;top:60px;right:0;width:4px;height:calc(100vh - 60px);z-index:999;background:rgba(255,255,255,0.1);">
+    <div id="progress-bar" style="position:absolute;width:100%;background:var(--lust-red);height:0%;transition:height 0.3s ease;bottom:0;"></div>
+  </div>
+  
+  <div id="scroll-icon" style="position:fixed;right:30px;bottom:30px;font-size:2rem;color:var(--lust-red);text-shadow:0 0 10px rgba(255,20,147,0.7);opacity:0;transition:opacity 0.3s ease, transform 0.5s ease;z-index:1000;">👇</div>
+  
+  <script>
+   const categories = [
+  {name:'Pretty', file:'videos_pretty.csv'},
+  {name:'Real', file:'videos_real.csv'},
+  {name:'Romantic', file:'videos_romantic.csv'},
+  {name:'Anime', file:'videos_anime.csv'},
+  {name:'Asian', file:'videos_asian.csv'},
+  {name:'Bbc Big Black Cock', file:'videos_bbc_big_black_cock.csv'},
+  {name:'Best Friend', file:'videos_best_friend.csv'},
+  {name:'Boobs', file:'videos_boobs.csv'},
+  {name:'Cheating', file:'videos_cheating.csv'},
+  {name:'Indian', file:'videos_indian.csv'},
+  {name:'Cheating Wife', file:'videos_cheating_wife.csv'},
+  {name:'Cuckold', file:'videos_cuckold.csv'},
+  {name:'Cum Inside', file:'videos_cum_inside.csv'},
+  {name:'Cute Indian', file:'videos_cute_indian.csv'},
+  {name:'Desi', file:'videos_desi.csv'},
+  {name:'Passionate', file:'videos_passionate.csv'},
+  {name:'Perfect Body', file:'videos_perfect_body.csv'},
+  
+  {name:'Pretty Indian', file:'videos_pretty_indian.csv'},
+  {name:'Filipina Teen', file:'videos_filipina_teen.csv'},
+  {name:'Friend S Mom', file:'videos_friend_s_mom.csv'},
+  {name:'Virgin', file:'videos_virgin.csv'},
+  {name:'Young', file:'videos_young.csv'},
+  {name:'Girlfriend', file:'videos_girlfriend.csv'},
+  {name:'Gym', file:'videos_gym.csv'},
+  {name:'Hentai', file:'videos_hentai.csv'},
+  {name:'Homemade', file:'videos_homemade.csv'},
+  {name:'Hot Milf', file:'videos_hot_milf.csv'},
+  {name:'Hot Mom', file:'videos_hot_mom.csv'},
+  
+  {name:'Indian Blowjob', file:'videos_indian_blowjob.csv'},
+  {name:'Indian Boobs', file:'videos_indian_boobs.csv'},
+  {name:'Indian Couple', file:'videos_indian_couple.csv'},
+  {name:'Indian Girlfriend', file:'videos_indian_girlfriend.csv'},
+  {name:'Indian Hardcore', file:'videos_indian_hardcore.csv'},
+  {name:'Indian Hd', file:'videos_indian_hd.csv'},
+  {name:'Indian Homemade', file:'videos_indian_homemade.csv'},
+  {name:'Indian In Public', file:'videos_indian_in_public.csv'},
+  {name:'Indian Mom', file:'videos_indian_mom.csv'},
+  {name:'Indian Pornstar', file:'videos_indian_pornstar.csv'},
+  {name:'Indian Teen', file:'videos_indian_teen.csv'},
+  {name:'Indian Threesome', file:'videos_indian_threesome.csv'},
+  {name:'Japanese', file:'videos_japanese.csv'},
+  {name:'Japanese Beauty', file:'videos_japanese_beauty.csv'},
+  {name:'Korean', file:'videos_korean.csv'},
+  {name:'Latina', file:'videos_latina.csv'},
+  {name:'Married', file:'videos_married.csv'},
+  {name:'Massage', file:'videos_massage.csv'},
+  {name:'Milf', file:'videos_milf.csv'},
+  {name:'Mom', file:'videos_mom.csv'},
+  {name:'Money', file:'videos_money.csv'},
+  {name:'Neighbor', file:'videos_neighbor.csv'},
+  
+  {name:'Public', file:'videos_public.csv'},
+  
+  {name:'Rough Sex', file:'videos_rough_sex.csv'},
+  {name:'Russian', file:'videos_russian.csv'},
+  {name:'Russian Beauty', file:'videos_russian_beauty.csv'},
+  {name:'Saree', file:'videos_saree.csv'},
+  {name:'Seduce', file:'videos_seduce.csv'},
+  {name:'Seduce Mom', file:'videos_seduce_mom.csv'},
+  {name:'Share Bed', file:'videos_share_bed.csv'},
+  {name:'Story', file:'videos_story.csv'},
+  {name:'Stranger', file:'videos_stranger.csv'},
+  {name:'Taboo Fantasy', file:'videos_taboo_fantasy.csv'},
+  {name:'Tamil', file:'videos_tamil.csv'},
+  {name:'Teacher', file:'videos_teacher.csv'},
+  {name:'Teen Big Ass', file:'videos_teen_big_ass.csv'},
+  {name:'Telugu', file:'videos_telugu.csv'},
+  {name:'Threesome', file:'videos_threesome.csv'},
+  
+];
+
+    let videos = [], page = 1, current = null, history = [], historyIndex = -1, allCards = [];
+    let categoryVisits = JSON.parse(localStorage.getItem('categoryVisits') || '{}');
+
+    // Save current state to session storage
+    function saveState() {
+      sessionStorage.setItem('kompaState', JSON.stringify({
+        current: current,
+        page: page,
+        history: history,
+        historyIndex: historyIndex
+      }));
+    }
+
+    // Load state from session storage
+    function loadState() {
+      const saved = sessionStorage.getItem('kompaState');
+      if (saved) {
+        const state = JSON.parse(saved);
+        current = state.current;
+        page = state.page;
+        history = state.history || [];
+        historyIndex = state.historyIndex || -1;
+      }
+    }
+
+    async function fetchCSV(path) {
+      const text = await fetch(path).then(r=>r.text());
+      return text.split('\n').slice(1).filter(l=>l).map(l=>{
+        const cols = l.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+        return {
+          title: cols[0].replace(/^"|"$/g,''),
+          thumbnail: cols[1].replace(/^"|"$/g,''),
+          video: cols[2].replace(/^"|"$/g,''),
+          duration: (cols[3]||'').replace(/^"|"$/g,'')
+        };
+      });
+    }
+
+    async function showCategories() {
+      pushHistory({type: 'categories'});
+      setSearchBarVisible(true);
+      current = null;
+      page = 1;
+      const ctn = document.getElementById('main');
+      ctn.innerHTML = '<div class="grid" id="catgrid"></div>';
+      const grid = document.getElementById('catgrid');
+      allCards = [];
+
+      // Sort categories by visit count (most visited first)
+      const sortedCategories = [...categories].sort((a, b) => {
+        const aVisits = categoryVisits[a.name] || 0;
+        const bVisits = categoryVisits[b.name] || 0;
+        return bVisits - aVisits;
+      });
+
+      for (const cat of sortedCategories) {
+        try {
+          const list = await fetchCSV(cat.file);
+          const thumb = list[0]?.thumbnail || 'placeholder.jpg';
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <img class="thumb" src="${thumb}" alt="${cat.name}">
+            <div class="video-title">${cat.name}</div>`;
+          card.onclick = () => {
+            // Track category visit
+            categoryVisits[cat.name] = (categoryVisits[cat.name] || 0) + 1;
+            localStorage.setItem('categoryVisits', JSON.stringify(categoryVisits));
+            loadCategory(cat);
+          };
+          grid.appendChild(card);
+          
+          // Store all cards with category info
+          allCards.push({
+            element: card,
+            category: cat,
+            searchText: cat.name.toLowerCase()
+          });
+        } catch (err) {
+          console.warn(`Could not load ${cat.file}:`, err);
+        }
+      }
+    }
+
+    function searchVideos() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const ctn = document.getElementById('main');
+      ctn.innerHTML = '<div class="grid" id="catgrid"></div>';
+      const grid = document.getElementById('catgrid');
+
+      if (!searchTerm) {
+        showCategories();
+        return;
+      }
+
+      // Filter and sort matching categories
+      const matches = allCards
+        .map(card => ({
+          ...card,
+          similarity: getSimilarity(searchTerm, card.searchText)
+        }))
+        .filter(card => card.similarity > 0.3)
+        .sort((a, b) => b.similarity - a.similarity);
+
+      // Show matching categories with full opacity
+      matches.forEach(match => {
+        const clone = match.element.cloneNode(true);
+        clone.style.opacity = '1';
+        clone.style.filter = 'none';
+        clone.onclick = () => {
+          categoryVisits[match.category.name] = (categoryVisits[match.category.name] || 0) + 1;
+          localStorage.setItem('categoryVisits', JSON.stringify(categoryVisits));
+          loadCategory(match.category);
+        };
+        grid.appendChild(clone);
+      });
+
+      // Show non-matching categories with lower opacity
+      allCards.forEach(card => {
+        if (!matches.some(m => m.category.name === card.category.name)) {
+          const clone = card.element.cloneNode(true);
+          clone.style.opacity = '0.4';
+          clone.style.filter = 'grayscale(70%)';
+          clone.onclick = () => {
+            categoryVisits[card.category.name] = (categoryVisits[card.category.name] || 0) + 1;
+            localStorage.setItem('categoryVisits', JSON.stringify(categoryVisits));
+            loadCategory(card.category);
+          };
+          grid.appendChild(clone);
+        }
+      });
+    }
+    function setSearchBarVisible(vis) {
+      document.getElementById('searchInput').style.display = vis ? '' : 'none';
+      if (vis) {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchInput').focus();
+      }
+    }
+
+    // Simple similarity function for fuzzy matching
+    function getSimilarity(a, b) {
+      if (b.includes(a)) return 1;
+      if (a.includes(b)) return 1;
+      
+      // Check for partial matches
+      let maxLen = Math.max(a.length, b.length);
+      let matches = 0;
+      
+      for (let i = 0; i < maxLen; i++) {
+        if (a[i] && b[i] && a[i] === b[i]) {
+          matches++;
+        }
+      }
+      
+      return matches / maxLen;
+    }
+
+    function pushHistory(state) {
+      history = history.slice(0, historyIndex + 1);
+      history.push(state);
+      historyIndex++;
+      saveState();
+    }
+
+    function goBack() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        const state = history[historyIndex];
+        restoreState(state);
+      }
+    }
+
+    function goForward() {
+      if (historyIndex < history.length - 1) {
+        historyIndex++;
+        const state = history[historyIndex];
+        restoreState(state);
+      }
+    }
+
+    function restoreState(state) {
+      if (state.type === 'categories') {
+        current = null;
+        page = 1;
+        showCategories();
+      } else if (state.type === 'category') {
+        current = state.category;
+        page = state.page;
+        renderVideos();
+      }
+      saveState();
+    }
+
+    async function loadCategory(cat) {
+      pushHistory({type: 'category', category: cat, page: 1});
+      current = cat;
+      page = 1;
+      
+      // Show loading indicator
+      const ctn = document.getElementById('main');
+      ctn.innerHTML = `
+        <div style="text-align:center; padding:2rem;">
+          <div style="font-size:2rem; color:var(--lust-red); margin-bottom:1rem;">Loading ${cat.name}...</div>
+          <div style="width:100px; height:4px; background:rgba(255,255,255,0.2); margin:0 auto; border-radius:2px;">
+            <div id="loading-bar" style="width:0%; height:100%; background:var(--lust-red); border-radius:2px; transition:width 0.3s;"></div>
+          </div>
+        </div>`;
+      
+      // Animate loading bar
+      let progress = 0;
+      const loadingBar = document.getElementById('loading-bar');
+      const loadingInterval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress > 90) progress = 90;
+        loadingBar.style.width = `${progress}%`;
+      }, 100);
+      
+      try {
+        videos = await fetchCSV(cat.file);
+        clearInterval(loadingInterval);
+        loadingBar.style.width = '100%';
+        setTimeout(() => renderVideos(), 300);
+      } catch (err) {
+        clearInterval(loadingInterval);
+        ctn.innerHTML = `
+          <div style="text-align:center; padding:2rem;">
+            <div style="font-size:1.5rem; color:var(--lust-red); margin-bottom:1rem;">Failed to load ${cat.name}</div>
+            <button onclick="showCategories()" style="background:var(--lust-red); color:white; border:none; padding:0.5rem 1rem; border-radius:4px; cursor:pointer;">
+              Back to Categories
+            </button>
+          </div>`;
+        console.error('Failed to load category:', err);
+      }
+    }
+
+    function renderVideos() {
+      setSearchBarVisible(false);
+      const ctn = document.getElementById('main');
+      ctn.innerHTML = `
+        <div style="display:flex;gap:8px;margin-bottom:1rem;">
+          <button class="back-btn" onclick="goBack()" ${historyIndex <= 0 ? 'disabled' : ''}>← Back</button>
+          <button class="back-btn" onclick="goForward()" ${historyIndex >= history.length - 1 ? 'disabled' : ''}>Redo →</button>
+        </div>
+        <h2 style="color:var(--lust-red); margin-bottom:1.5rem; font-weight:300; letter-spacing:1px; text-transform:uppercase; text-shadow:0 2px 4px rgba(255,20,147,0.3);">${current.name}</h2>
+        <div class="grid" id="grid"></div>
+        <div class="pagination" id="pag"></div>`;
+      const start = (page - 1) * parseInt(getComputedStyle(document.documentElement).getPropertyValue('--per-page'));
+      const slice = videos.slice(start, start + parseInt(getComputedStyle(document.documentElement).getPropertyValue('--per-page')));
+      const grid = document.getElementById('grid');
+      slice.forEach(v => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+  <div style="position:relative">
+    <img class="thumb" src="${v.thumbnail}" alt="${v.title}">
+    ${v.duration ? `<div class="badge">${v.duration}</div>` : ''}
+  </div>
+  <div class="video-title" title="${v.title.replace(/"/g,'&quot;')}">${v.title}</div>`;
+        card.onclick = () => window.open(v.video, '_blank');
+        grid.appendChild(card);
+      });
+      renderPagination(videos.length);
+    }
+
+    function renderPagination(total) {
+      const per = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--per-page'));
+      const pages = Math.ceil(total / per);
+      const pag = document.getElementById('pag');
+      pag.innerHTML = '';
+      const prev = document.createElement('button');
+      prev.textContent = '← Prev';
+      prev.disabled = page === 1;
+      prev.onclick = () => { page--; renderVideos(); };
+      pag.appendChild(prev);
+
+      const addBtn = p => {
+        const btn = document.createElement('div');
+        btn.className = 'page-btn' + (p === page ? ' active' : '');
+        btn.textContent = p;
+        btn.onclick = () => { page = p; renderVideos(); };
+        pag.appendChild(btn);
+      };
+      addBtn(1);
+      if (page > 3) {
+        const e = document.createElement('span');
+        e.className = 'ellipsis'; e.textContent = '…';
+        pag.appendChild(e);
+      }
+      for (let p = Math.max(2, page - 1); p <= Math.min(pages - 1, page + 1); p++) {
+        addBtn(p);
+      }
+      if (page < pages - 2) {
+        const e = document.createElement('span');
+        e.className = 'ellipsis'; e.textContent = '…';
+        pag.appendChild(e);
+      }
+      if (pages > 1) addBtn(pages);
+
+      const next = document.createElement('button');
+      next.textContent = 'Next →';
+      next.disabled = page === pages;
+      next.onclick = () => { page++; renderVideos(); };
+      pag.appendChild(next);
+    }
+
+    // Scroll animations
+    let lastScroll = 0;
+    const header = document.querySelector('header');
+    const scrollIcon = document.getElementById('scroll-icon');
+    const progressBar = document.getElementById('progress-bar');
+    
+    window.addEventListener('scroll', () => {
+      const currentScroll = window.scrollY;
+      const docHeight = document.body.scrollHeight - window.innerHeight;
+      const scrollPercent = (currentScroll / docHeight) * 100;
+      
+      // Update progress bar
+      progressBar.style.height = `${scrollPercent}%`;
+      
+      // Show/hide scroll icon
+      if (currentScroll > 300) {
+        scrollIcon.style.opacity = '1';
+        scrollIcon.style.transform = `translateY(${Math.sin(currentScroll/100)*10}px)`;
+      } else {
+        scrollIcon.style.opacity = '0';
+      }
+      
+      // Header behavior - hide on scroll down, show on scroll up
+      if (currentScroll > lastScroll && currentScroll > 100) {
+        header.classList.add('header-hidden');
+      } else {
+        header.classList.remove('header-hidden');
+      }
+      
+      lastScroll = currentScroll;
+    });
+    
+    // Add Google Font for sexy cursive
+    const fontLink = document.createElement('link');
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap';
+    fontLink.rel = 'stylesheet';
+    document.head.appendChild(fontLink);
+    
+    // Load state and restore view
+    loadState();
+    if (current) {
+      // Re-fetch the current category's videos
+      fetchCSV(current.file).then(fetchedVideos => {
+        videos = fetchedVideos;
+        renderVideos();
+      });
+    } else {
+      showCategories();
+    }
+    
+    // Save state before page unload
+    window.addEventListener('beforeunload', saveState);
+    
+  </script>
+
+  <script>
+    // Floating hearts animation
+    class Heart {
+      constructor() {
+        this.x = Math.random() * window.innerWidth;
+        this.y = Math.random() * window.innerHeight;
+        this.size = Math.random() * 20 + 10;
+        this.speedX = (Math.random() - 0.5) * 2;
+        this.speedY = (Math.random() - 0.5) * 2;
+        this.element = document.createElement('div');
+        this.element.className = 'heart';
+        this.element.style.width = `${this.size}px`;
+        this.element.style.height = `${this.size}px`;
+        this.element.style.left = `${this.x}px`;
+        this.element.style.top = `${this.y}px`;
+        this.element.style.opacity = Math.random() * 0.7 + 0.3;
+        document.body.appendChild(this.element);
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        
+        // Bounce off edges
+        if (this.x <= 0 || this.x >= window.innerWidth - this.size) {
+          this.speedX *= -1;
+        }
+        if (this.y <= 0 || this.y >= window.innerHeight - this.size) {
+          this.speedY *= -1;
+        }
+        
+        this.element.style.left = `${this.x}px`;
+        this.element.style.top = `${this.y}px`;
+      }
+    }
+
+    // Collision detection between hearts
+    function checkCollision(heart1, heart2) {
+      const dx = heart1.x - heart2.x;
+      const dy = heart1.y - heart2.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < heart1.size/2 + heart2.size/2) {
+        // Swap speeds for bounce effect
+        [heart1.speedX, heart2.speedX] = [heart2.speedX, heart1.speedX];
+        [heart1.speedY, heart2.speedY] = [heart2.speedY, heart1.speedY];
+        
+        // Add slight push to prevent sticking
+        const push = 0.1;
+        heart1.x += heart1.speedX * push;
+        heart1.y += heart1.speedY * push;
+        heart2.x += heart2.speedX * push;
+        heart2.y += heart2.speedY * push;
+      }
+    }
+
+    // Create and animate hearts
+    const hearts = [];
+    for (let i = 0; i < 15; i++) {
+      hearts.push(new Heart());
+    }
+
+    function animate() {
+      for (let i = 0; i < hearts.length; i++) {
+        hearts[i].update();
+        for (let j = i + 1; j < hearts.length; j++) {
+          checkCollision(hearts[i], hearts[j]);
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Resize handler to reposition hearts
+    window.addEventListener('resize', () => {
+      hearts.forEach(heart => {
+        if (heart.x > window.innerWidth - heart.size) heart.x = window.innerWidth - heart.size;
+        if (heart.y > window.innerHeight - heart.size) heart.y = window.innerHeight - heart.size;
+      });
+    });
+  </script>
+</body>
+</html>
+  
